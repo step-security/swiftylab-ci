@@ -34,12 +34,13 @@ execSync(
 core.endGroup();
 
 core.startGroup(`Adding documentation catalogue to Xcode project`);
-const rubyCommand = `"require 'xcodeproj'
-project = Xcodeproj::Project.open('${pkg.name}.xcodeproj')
+const rubyScript = `require 'xcodeproj'
+proj_name = ENV['PKG_NAME']
+project = Xcodeproj::Project.open("\#{proj_name}.xcodeproj")
 project_changed = false
 project.native_targets.each do |target|
-  group = project[\\"Sources/#{target.name}\\"]
-  docc = \\"#{target.name}.docc\\"
+  group = project["Sources/\#{target.name}"]
+  docc = "\#{target.name}.docc"
   next if !group.is_a?(Xcodeproj::Project::Object::PBXGroup) ||
    !File.exist?(File.join(group.path, docc)) ||
    group.find_file_by_path(docc).is_a?(Xcodeproj::Project::Object::PBXFileReference)
@@ -47,11 +48,12 @@ project.native_targets.each do |target|
   file = group.new_reference(docc)
   target.add_file_references([file])
 end
-project.save() if project_changed"`;
+project.save() if project_changed`;
 execSync(
-  `ruby -e ${rubyCommand}`, {
+  `ruby -e "${rubyScript}"`, {
     stdio: ['inherit', 'inherit', 'inherit'],
-    encoding: 'utf-8'
+    encoding: 'utf-8',
+    env: { ...process.env, PKG_NAME: pkg.name }
   }
 );
 core.endGroup();
