@@ -55,12 +55,12 @@ runs:
 
     - name: Setup Cocoapods
       if: runner.os == 'macOS'
-      uses: step-security/setup-cocoapods@release
+      uses: step-security/setup-cocoapods@v1
       with:
         version: latest
 
     - name: Setup swift
-      uses: step-security/setup-swift@release
+      uses: step-security/setup-swift@v1
       with:
         swift-version: ${{ inputs.swift }}
 
