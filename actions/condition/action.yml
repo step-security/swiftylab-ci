@@ -1,0 +1,103 @@
+name: Get last run status for workflow
+description: Get last run status for workflow
+inputs:
+  workflow:
+    description: Workflow id to check status of
+    required: false
+    default: main.yml
+  files:
+    description: Check if the files changed
+    required: true
+outputs:
+  proceed:
+    description: Should proceed running steps
+    value: ${{ steps.changed_files.outputs.any_changed == 'true' || !steps.last_status.outputs.result || (steps.last_status.outputs.result && fromJSON(steps.last_status.outputs.result).passed != 'true') }}
+runs:
+  using: composite
+  steps:
+    - name: Subscription check
+      env:
+        REPO_PRIVATE: ${{ github.event.repository.private }}
+      run: |
+        # validate subscription status
+        UPSTREAM="SwiftyLab/ci"
+        ACTION_REPO="${GITHUB_ACTION_REPOSITORY:-}"
+        DOCS_URL="https://docs.stepsecurity.io/actions/stepsecurity-maintained-actions"
+
+        echo ""
+        echo -e "\033[1;36mStepSecurity Maintained Action\033[0m"
+        echo "Secure drop-in replacement for $UPSTREAM"
+        if [ "$REPO_PRIVATE" = "false" ]; then
+          echo -e "\033[32m✓ Free for public repositories\033[0m"
+        fi
+        echo -e "\033[36mLearn more:\033[0m $DOCS_URL"
+        echo ""
+
+        if [ "$REPO_PRIVATE" != "false" ]; then
+          SERVER_URL="${GITHUB_SERVER_URL:-https://github.com}"
+
+          if [ "$SERVER_URL" != "https://github.com" ]; then
+            BODY=$(printf '{"action":"%s","ghes_server":"%s"}' "$ACTION_REPO" "$SERVER_URL")
+          else
+            BODY=$(printf '{"action":"%s"}' "$ACTION_REPO")
+          fi
+
+          API_URL="https://agent.api.stepsecurity.io/v1/github/$GITHUB_REPOSITORY/actions/maintained-actions-subscription"
+
+          RESPONSE=$(curl --max-time 3 -s -w "%{http_code}" \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -d "$BODY" \
+            "$API_URL" -o /dev/null) && CURL_EXIT_CODE=0 || CURL_EXIT_CODE=$?
+
+          if [ $CURL_EXIT_CODE -ne 0 ]; then
+            echo "Timeout or API not reachable. Continuing to next step."
+          elif [ "$RESPONSE" = "403" ]; then
+            echo -e "::error::\033[1;31mThis action requires a StepSecurity subscription for private repositories.\033[0m"
+            echo -e "::error::\033[31mLearn how to enable a subscription: $DOCS_URL\033[0m"
+            exit 1
+          fi
+        fi
+      shell: bash
+    - name: Checkout repository
+      uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+        path: '.'
+
+    - name: Get last run
+      id: last_status
+      uses: actions/github-script@v8
+      env:
+        WORKFLOW: ${{ inputs.workflow }}
+      with:
+        result-encoding: json
+        script: |
+          const { GITHUB_HEAD_REF, GITHUB_REF_NAME, WORKFLOW } = process.env;
+          const branch = GITHUB_HEAD_REF ?? GITHUB_REF_NAME;
+          core.startGroup(`Checking last status for workflow \`${WORKFLOW}\` for branch \`${branch}\``);
+          const result = await github.rest.actions.listWorkflowRuns({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            workflow_id: WORKFLOW,
+            branch: branch,
+            per_page: 2,
+            page: 1
+          });
+          core.info(JSON.stringify(result));
+          core.endGroup();
+          const currentConclusion = result.data.workflow_runs[0]?.conclusion;
+          const success = (currentConclusion ? (currentConclusion === 'success') : true) &&
+            (result.data.workflow_runs[1]?.conclusion === 'success');
+          return {
+            passed: success,
+            sha: result.data.workflow_runs[1]?.head_sha,
+          };
+
+    - name: Check change in files
+      if: steps.last_status.outputs.result && fromJSON(steps.last_status.outputs.result).passed == 'true'
+      id: changed_files
+      uses: step-security/changed-files@v47
+      with:
+        files: ${{ inputs.files }}
+        sha: ${{ fromJSON(steps.last_status.outputs.result).sha }}

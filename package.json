@@ -1,0 +1,32 @@
+{
+  "name": "swiftylab-ci",
+  "version": "1.0.0",
+  "type": "commonjs",
+  "summary": "Reusable workflows and automation scripts for swift libraries.",
+  "description": "Reusable workflows, custom github actions and automation scripts for swift libraries, used by SwiftyLab repositories.",
+  "homepage": "https://github.com/step-security/swiftylab-ci",
+  "license": "MIT",
+  "author": {
+    "name": "step-security"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/step-security/swiftylab-ci.git"
+  },
+  "private": true,
+  "directories": {
+    "bin": "./bin"
+  },
+  "dependencies": {
+    "@actions/core": "^1.11.1",
+    "archiver": "^7.0.1",
+    "concurrently": "^9.2.1",
+    "conventional-changelog-conventionalcommits": "^7.0.2",
+    "cross-env": "^7.0.3",
+    "fs-extra": "^11.2.0",
+    "minimist": "^1.2.8",
+    "open": "^10.1.0",
+    "plist": "^3.1.0",
+    "semver": "^7.6.3"
+  }
+}
