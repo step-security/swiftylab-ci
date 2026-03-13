@@ -71,7 +71,7 @@ runs:
 
     - name: Conventional Changelog Action
       id: conventional_changelog
-      uses: step-security/conventional-changelog-action@v6
+      uses: step-security/conventional-changelog-action@d19f438d2b66663f5ae90d972507eecbce43d886 # v6.2.0
       with:
         github-token: ${{ github.token }}
         git-message: 'chore(CHANGELOG): update for {version}'

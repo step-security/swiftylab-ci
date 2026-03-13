@@ -55,17 +55,17 @@ runs:
 
     - name: Setup Cocoapods
       if: runner.os == 'macOS'
-      uses: step-security/setup-cocoapods@v1
+      uses: step-security/setup-cocoapods@e3cd70e5ed3ee6117288e5e4c4b73efd00f16625 # v1.4.0
       with:
         version: latest
 
     - name: Setup swift
-      uses: step-security/setup-swift@v1
+      uses: step-security/setup-swift@21373da612364ef96e86b3a8be85989172212233 # v1.12.0
       with:
         swift-version: ${{ inputs.swift }}
 
     - name: Setup node
-      uses: actions/setup-node@v6
+      uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
       with:
         node-version: '24'
 
