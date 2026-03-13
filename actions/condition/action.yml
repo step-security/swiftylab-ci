@@ -60,14 +60,14 @@ runs:
         fi
       shell: bash
     - name: Checkout repository
-      uses: actions/checkout@v6
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         fetch-depth: 0
         path: '.'
 
     - name: Get last run
       id: last_status
-      uses: actions/github-script@v8
+      uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
       env:
         WORKFLOW: ${{ inputs.workflow }}
       with:
@@ -97,7 +97,7 @@ runs:
     - name: Check change in files
       if: steps.last_status.outputs.result && fromJSON(steps.last_status.outputs.result).passed == 'true'
       id: changed_files
-      uses: step-security/changed-files@v47
+      uses: step-security/changed-files@60967b822d3001fa82242f8d6b4ed46bc3600a68 # v47.0.1
       with:
         files: ${{ inputs.files }}
         sha: ${{ fromJSON(steps.last_status.outputs.result).sha }}
